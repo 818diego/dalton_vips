@@ -86,20 +86,18 @@ function vip.GetPlayerVipData(player, type)
     if not player or not player.PlayerData.citizenid then return end
     local citizenid = player.PlayerData.citizenid
 
-    if not cache[citizenid] then
-        local result = MySQL.query.await('SELECT * FROM dalton_vip WHERE citizenid = ?', { citizenid })
-        if result and #result > 0 then
-            cache[citizenid] = result[1]
-            cache[citizenid].lastUpdate = os.time()
-            if vip.CheckVipExpiration(cache[citizenid]) then
-                local oldVipLevel = cache[citizenid].vip_level
-                vip.RemoveExpiredVip(citizenid, oldVipLevel)
-            end
-        else
-            return vip.InsertPlayer(player)
+    local result = MySQL.query.await('SELECT * FROM dalton_vip WHERE citizenid = ?', { citizenid })
+    if result and #result > 0 then
+        local vipData = result[1]
+        if vip.CheckVipExpiration(vipData) then
+            vip.RemoveExpiredVip(citizenid, vipData.vip_level)
+            result = MySQL.query.await('SELECT * FROM dalton_vip WHERE citizenid = ?', { citizenid })
+            vipData = result[1]
         end
+        return type and vipData[type] or vipData
+    else
+        return vip.InsertPlayer(player)
     end
-    return type and cache[citizenid][type] or cache[citizenid]
 end
 
 function vip.BuyVipLevel(player, levelName)
