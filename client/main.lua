@@ -70,10 +70,9 @@ function OpenVipShop(vipInfo)
             description = locale('menu.cost_multiplier', level.cost, level.pointsMultiplier),
             icon = 'crown',
             onSelect = function()
-                local durationInMinutes = math.floor(Config.VipDuration / (60 * 1000))
                 local alert = lib.alertDialog({
                     header = locale('menu.confirm_purchase'),
-                    content = locale('menu.confirm_purchase_desc', level.name, level.cost, durationInMinutes, level.pointsMultiplier),
+                    content = locale('menu.confirm_purchase_desc', level.name, level.cost, 30, level.pointsMultiplier),
                     centered = true,
                     cancel = true,
                     labels = {
