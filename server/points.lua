@@ -56,4 +56,7 @@ function points.UseReferralCode(player, code)
     return false, message
 end
 
+exports('AddVipPoints', points.AddVipPoints)
+exports('UseReferralCode', points.UseReferralCode)
+
 return points

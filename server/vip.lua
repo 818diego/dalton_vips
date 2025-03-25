@@ -200,4 +200,9 @@ function vip.GetCache()
     return cache
 end
 
+exports('GetPlayerVipData', vip.GetPlayerVipData)
+exports('GetVipLevelName', vip.GetVipLevelName)
+exports('BuyVipLevel', vip.BuyVipLevel)
+exports('GetVipLevelByName', vip.GetVipLevelByName)
+
 return vip

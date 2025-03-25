@@ -193,10 +193,3 @@ lib.addCommand('addPoints', {
     })
 end)
 
--- Exports
-exports('GetPlayerVipData', Vip.GetPlayerVipData)
-exports('AddVipPoints', Points.AddVipPoints)
-exports('GetVipLevelName', Vip.GetVipLevelName)
-exports('BuyVipLevel', Vip.BuyVipLevel)
-exports('GetVipLevelByName', Vip.GetVipLevelByName)
-exports('UseReferralCode', Points.UseReferralCode)
