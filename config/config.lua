@@ -15,7 +15,7 @@ Config.ReferralCodes = {
 Config.SaveInterval = 300 -- 5 minutes
 
 Config.VipLevels = {
-    -- Default level is "No VIP" (0 points)
+    -- Default level is "No VIP" (1 points)
     { name = "Bronze", cost = 1000, pointsMultiplier = 2 },
     { name = "Silver", cost = 1800, pointsMultiplier = 3 },
     { name = "Gold",   cost = 2500, pointsMultiplier = 4 }

@@ -11,12 +11,11 @@ CreateThread(function()
         Wait(Config.PointsInterval * 60 * 1000)
         local players = exports.qbx_core:GetQBPlayers()
         for _, player in pairs(players) do
-            if player then
+            if player and player.PlayerData then
                 local vipData = Vip.GetPlayerVipData(player)
-                if vipData and not Vip.CheckVipExpiration(vipData) then
+                if vipData then
                     local vipLevel = Vip.GetVipLevelByName(vipData.vip_level or "Sin VIP")
-                    local pointsToAdd = Config.PointsAmount * (vipLevel.pointsMultiplier or 1)
-
+                    local pointsToAdd = Config.PointsAmount * vipLevel.pointsMultiplier
                     if pointsToAdd > 0 then
                         Points.AddVipPoints(player, pointsToAdd)
                     end
@@ -29,7 +28,6 @@ end)
 CreateThread(function()
     while true do
         Wait(10000)
-        local currentTime = os.time()
         local players = exports.qbx_core:GetQBPlayers()
         for _, player in pairs(players) do
             if player then
@@ -41,36 +39,12 @@ CreateThread(function()
                 end
             end
         end
-        if currentTime % Config.SaveInterval == 0 then
-            Vip.SaveDirtyPlayers()
-        end
     end
 end)
 
 -- Events
 RegisterNetEvent('QBCore:Server:OnPlayerLoaded', function(player)
     Vip.GetPlayerVipData(player)
-end)
-
-AddEventHandler('onResourceStop', function(resourceName)
-    if GetCurrentResourceName() ~= resourceName then return end
-    Vip.SaveDirtyPlayers()
-end)
-
-AddEventHandler('txAdmin:events:serverShuttingDown', function()
-    Vip.SaveDirtyPlayers()
-end)
-
-AddEventHandler('playerDropped', function()
-    if not source then return end
-    local player = exports.qbx_core:GetPlayer(source)
-    if not player then return end
-
-    local citizenid = player.PlayerData.citizenid
-    local dirtyPlayers = Vip.GetDirtyPlayers()
-    if dirtyPlayers[citizenid] then
-        Vip.SaveDirtyPlayers()
-    end
 end)
 
 -- Callbacks
@@ -192,4 +166,3 @@ lib.addCommand('addPoints', {
         position = 'top'
     })
 end)
-

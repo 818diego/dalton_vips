@@ -1,6 +1,27 @@
 local vip = {}
-local cache = {}
-local dirtyPlayers = {}
+
+function vip.GetPlayerVipData(player)
+    if not player or not player.PlayerData or not player.PlayerData.citizenid then return nil end
+    
+    local citizenid = player.PlayerData.citizenid
+    local result = MySQL.query.await('SELECT * FROM dalton_vip WHERE citizenid = ? LIMIT 1', { citizenid })
+    
+    -- Si no hay datos, crear nuevo registro
+    if not result or #result == 0 then
+        MySQL.insert.await('INSERT INTO dalton_vip (citizenid, vip_points, vip_level, vip_activated_at, used_referral) VALUES (?, ?, ?, NULL, ?)',
+            { citizenid, 0, "Sin VIP", false })
+        
+        return {
+            citizenid = citizenid,
+            vip_points = 0,
+            vip_level = "Sin VIP",
+            vip_activated_at = nil,
+            used_referral = false
+        }
+    end
+
+    return result[1]
+end
 
 function vip.GetVipLevelName(player)
     if not player then return "Sin VIP" end
@@ -11,7 +32,11 @@ end
 
 function vip.GetVipLevelByName(levelName)
     if levelName == "Sin VIP" then
-        return { name = "Sin VIP", pointsMultiplier = 1 }
+        return { name = "Sin VIP", cost = 0, pointsMultiplier = 1 }
+    end
+
+    if not Config.VipLevels then
+        return { name = "Sin VIP", cost = 0, pointsMultiplier = 1 }
     end
 
     for _, level in ipairs(Config.VipLevels) do
@@ -20,7 +45,7 @@ function vip.GetVipLevelByName(levelName)
         end
     end
 
-    return { name = "Sin VIP", pointsMultiplier = 1 }
+    return { name = "Sin VIP", cost = 0, pointsMultiplier = 1 }
 end
 
 function vip.CheckVipExpiration(vipData)
@@ -42,9 +67,6 @@ function vip.CheckVipExpiration(vipData)
 end
 
 function vip.RemoveExpiredVip(citizenid, oldVipLevel)
-    cache[citizenid].vip_level = "Sin VIP"
-    cache[citizenid].vip_activated_at = nil
-
     MySQL.update('UPDATE dalton_vip SET vip_level = ?, vip_activated_at = NULL WHERE citizenid = ?',
         { "Sin VIP", citizenid })
 
@@ -58,45 +80,6 @@ function vip.RemoveExpiredVip(citizenid, oldVipLevel)
             type = 'error',
             position = 'top'
         })
-    end
-end
-
-function vip.InsertPlayer(player)
-    if not player or not player.PlayerData.citizenid then return end
-    local citizenid = player.PlayerData.citizenid
-
-    MySQL.insert(
-        'INSERT INTO dalton_vip (citizenid, vip_points, vip_level, vip_activated_at, used_referral) VALUES (?, ?, ?, NULL, ?)',
-        {
-            citizenid, 0, "Sin VIP", false
-        })
-
-    cache[citizenid] = {
-        citizenid = citizenid,
-        vip_points = 0,
-        vip_level = "Sin VIP",
-        vip_activated_at = nil,
-        used_referral = false,
-        lastUpdate = os.time()
-    }
-    return cache[citizenid]
-end
-
-function vip.GetPlayerVipData(player, type)
-    if not player or not player.PlayerData.citizenid then return end
-    local citizenid = player.PlayerData.citizenid
-
-    local result = MySQL.query.await('SELECT * FROM dalton_vip WHERE citizenid = ?', { citizenid })
-    if result and #result > 0 then
-        local vipData = result[1]
-        if vip.CheckVipExpiration(vipData) then
-            vip.RemoveExpiredVip(citizenid, vipData.vip_level)
-            result = MySQL.query.await('SELECT * FROM dalton_vip WHERE citizenid = ?', { citizenid })
-            vipData = result[1]
-        end
-        return type and vipData[type] or vipData
-    else
-        return vip.InsertPlayer(player)
     end
 end
 
@@ -121,11 +104,6 @@ function vip.BuyVipLevel(player, levelName)
         return false, locale('errors.active_vip')
     end
 
-    if vipData.vip_points < 0 then
-        vipData.vip_points = 0
-        MySQL.update('UPDATE dalton_vip SET vip_points = 0 WHERE citizenid = ?', { player.PlayerData.citizenid })
-    end
-
     if vipData.vip_points < targetLevel.cost then
         return false, locale('errors.insufficient_points')
     end
@@ -133,11 +111,6 @@ function vip.BuyVipLevel(player, levelName)
     local citizenid = player.PlayerData.citizenid
     local newPoints = vipData.vip_points - targetLevel.cost
     local currentTime = os.date('%Y-%m-%d %H:%M:%S')
-
-    cache[citizenid].vip_points = newPoints
-    cache[citizenid].vip_level = targetLevel.name
-    cache[citizenid].vip_activated_at = currentTime
-    dirtyPlayers[citizenid] = true
 
     MySQL.update('UPDATE dalton_vip SET vip_points = ?, vip_level = ?, vip_activated_at = ? WHERE citizenid = ?',
         { newPoints, targetLevel.name, currentTime, citizenid })
@@ -155,47 +128,6 @@ function vip.BuyVipLevel(player, levelName)
     end
 
     return true, locale('notifications.success')
-end
-
-function vip.SaveDirtyPlayers()
-    local currentTime = os.time()
-    local updates = {}
-    local params = {}
-    for citizenid, _ in pairs(dirtyPlayers) do
-        local data = cache[citizenid]
-        if data then
-            table.insert(updates, "(?,?,?,?)")
-            table.insert(params, citizenid)
-            table.insert(params, data.vip_points or 0)
-            table.insert(params, data.vip_level or "Sin VIP")
-            table.insert(params, data.vip_activated_at or nil)
-        end
-    end
-    if #updates > 0 then
-        local query = string.format([[
-            INSERT INTO dalton_vip (citizenid, vip_points, vip_level, vip_activated_at)
-            VALUES %s
-            ON DUPLICATE KEY UPDATE
-            vip_points = VALUES(vip_points),
-            vip_level = VALUES(vip_level),
-            vip_activated_at = VALUES(vip_activated_at)
-        ]], table.concat(updates, ","))
-
-        MySQL.update(query, params)
-    end
-    dirtyPlayers = {}
-end
-
-function vip.GetDirtyPlayers()
-    return dirtyPlayers
-end
-
-function vip.SetDirtyPlayer(citizenid)
-    dirtyPlayers[citizenid] = true
-end
-
-function vip.GetCache()
-    return cache
 end
 
 exports('GetPlayerVipData', vip.GetPlayerVipData)
