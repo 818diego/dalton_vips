@@ -1,0 +1,51 @@
+{
+    "menu": {
+        "vip_info": "VIP Information",
+        "your_vip_level": "Your VIP Level",
+        "your_total_points": "Your Total Points",
+        "points_suffix": "points",
+        "buy_vip": "Buy VIP",
+        "buy_vip_desc": "Purchase a VIP level using your points",
+        "help_title": "VIP System Help",
+        "help_content": "Available Commands\n\n* 🎮 `/vip`\n  *Open VIP menu*\n\n* 🎯 `/referred [code]`\n  *Redeem a referral code*\n\n* 💎 `/redeem [transactionId]`\n  *Redeem a Tebex purchase*",
+        "confirm_purchase": "Confirm Purchase?",
+        "confirm_purchase_desc": "Are you sure you want to buy VIP %s for %d points?\nDuration: %d minutes\nMultiplier: x%d",
+        "confirm": "Confirm",
+        "cancel": "Cancel",
+        "understood": "Understood",
+        "vip_shop": "VIP Shop",
+        "cost_multiplier": "Cost: %d points | Multiplier: x%d"
+    },
+    "notifications": {
+        "error": "Error",
+        "success": "Success",
+        "vip_menu_error": "Could not retrieve VIP information",
+        "vip_points_added": "You received %d VIP points",
+        "vip_purchase_success": "Purchase Successful",
+        "vip_purchase_error": "Purchase Error",
+        "vip_updated": "VIP Updated",
+        "vip_updated_desc": "You have acquired VIP level %s (Duration: %d minutes)",
+        "vip_expired": "VIP Expired!",
+        "vip_expired_desc": "Your VIP %s has expired. Thank you for your support!",
+        "points_added_admin": "You have added %d VIP points to %s",
+        "player_not_found": "Player not found",
+        "tebex_success": "Redemption Successful!",
+        "tebex_points_received": "You received %d VIP points for your purchase of %s"
+    },
+    "errors": {
+        "invalid_amount": "Amount must be a positive number",
+        "player_not_found": "Player data not found",
+        "invalid_data": "Invalid data",
+        "invalid_referral": "Invalid referral code",
+        "referral_already_used": "You have already used a referral code",
+        "insufficient_points": "Insufficient points",
+        "active_vip": "You already have an active VIP. You must wait until it expires.",
+        "invalid_vip_level": "Invalid VIP level",
+        "tebex_disabled": "Tebex integration is not enabled",
+        "tebex_error": "Error getting payment information",
+        "tebex_decode_error": "Error decoding Tebex response",
+        "payment_already_redeemed": "This payment has already been redeemed",
+        "payment_incomplete": "Payment is not complete",
+        "no_vip_rewards": "No VIP point rewards for this payment"
+    }
+}
