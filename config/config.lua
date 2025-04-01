@@ -1,6 +1,6 @@
 Config = {}
 
-Config.PointsInterval = 1       -- Interval in minutes to give points
+Config.PointsInterval = 30        -- Interval in minutes to give points (changed from 0.15 to 30)
 Config.PointsAmount = 1         -- Base amount of points given per interval
 Config.NotifyPlayer = true      -- Whether to notify the player when receiving/buying VIP
 Config.VipDuration = 2592000000 -- VIP duration in milliseconds (30 days by default)
@@ -23,7 +23,7 @@ Config.VipLevels = {
 
 -- Tebex Configuration
 Config.TebexAPI = {
-    SecretKey = "YourApiSecretKey", -- Replace with your Tebex secret key
+    SecretKey = "8e326679a5443d53be44b65b7950b1de65d6f1fe", -- Replace with your Tebex secret key
     Enabled = true,                 -- Enable/disable Tebex integration
     PackageRewards = {              -- Package ID and VIP points it grants
         [1234567] = 1000,           -- Package with ID 100001 will grant 1000 VIP points

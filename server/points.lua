@@ -2,20 +2,18 @@ local points = {}
 local Vip = require('server.vip')
 
 function points.AddVipPoints(player, amount)
-    if not player or not amount then return false, locale('errors.invalid_data') end
-
     if type(amount) ~= 'number' or amount <= 0 then
         return false, locale('errors.invalid_amount')
     end
 
-    local citizenid = player.PlayerData.citizenid
-    if not citizenid then return false, locale('errors.invalid_data') end
+    local license2 = Vip.GetLicense2(player.PlayerData.source)
+    if not license2 then return false, locale('errors.invalid_data') end
 
     local data = Vip.GetPlayerVipData(player)
     if not data then return false, locale('errors.player_not_found') end
 
     local newPoints = (data.vip_points or 0) + amount
-    local success = MySQL.update.await('UPDATE dalton_vip SET vip_points = ? WHERE citizenid = ?', { newPoints, citizenid })
+    local success = MySQL.update.await('UPDATE dalton_vip SET vip_points = ? WHERE license2 = ?', { newPoints, license2 })
     
     if not success then 
         return false, locale('errors.database_error')
@@ -23,7 +21,7 @@ function points.AddVipPoints(player, amount)
 
     if Config.NotifyPlayer then
         TriggerClientEvent('ox_lib:notify', player.PlayerData.source, {
-            id = 'vip_points_added_' .. citizenid,
+            id = 'vip_points_added_' .. license2,
             title = 'VIP Points',
             description = locale('notifications.vip_points_added', amount),
             duration = 3000,
@@ -41,7 +39,7 @@ function points.UseReferralCode(player, code)
     local pointsToAdd = Config.ReferralCodes[code:lower()]
     if not pointsToAdd then return false, locale('errors.invalid_referral') end
 
-    local citizenid = player.PlayerData.citizenid
+    local license2 = Vip.GetLicense2(player.PlayerData.source)
     local data = Vip.GetPlayerVipData(player)
     if not data then return false, locale('errors.player_not_found') end
 
@@ -51,7 +49,7 @@ function points.UseReferralCode(player, code)
 
     local success, message = points.AddVipPoints(player, pointsToAdd)
     if success then
-        MySQL.update('UPDATE dalton_vip SET used_referral = ? WHERE citizenid = ?', { true, citizenid })
+        MySQL.update('UPDATE dalton_vip SET used_referral = ? WHERE license2 = ?', { true, license2 })
         return true, locale('notifications.vip_points_added', pointsToAdd)
     end
     return false, message

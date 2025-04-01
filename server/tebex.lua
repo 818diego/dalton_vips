@@ -1,5 +1,6 @@
 local tebex = {}
 local Points = require('server.points')
+local Vip = require('server.vip')
 
 -- verify if the transactionId has been redeemed
 function tebex.HasRedeemed(transactionId)
@@ -8,10 +9,10 @@ function tebex.HasRedeemed(transactionId)
 end
 
 -- update the transaction as redeemed
-function tebex.MarkAsRedeemed(citizenid, transactionId, pointsAdded)
+function tebex.MarkAsRedeemed(license2, transactionId, pointsAdded)
     MySQL.insert(
-        'INSERT INTO dalton_vip_transactions (citizenid, transaction_id, points_added, redeemed_at) VALUES (?, ?, ?, NOW())',
-        { citizenid, transactionId, pointsAdded })
+        'INSERT INTO dalton_vip_transactions (license2, transaction_id, points_added, redeemed_at) VALUES (?, ?, ?, NOW())',
+        { license2, transactionId, pointsAdded })
 end
 
 -- get information about the transaction from Tebex
@@ -110,13 +111,14 @@ function tebex.ProcessPayment(player, transactionId, callback)
             -- add point to the player
             local success, message = Points.AddVipPoints(player, totalPoints)
             if success then
-                tebex.MarkAsRedeemed(player.PlayerData.citizenid, transactionId, totalPoints)
+                local license2 = Vip.GetLicense2(player.PlayerData.source)
+                tebex.MarkAsRedeemed(license2, transactionId, totalPoints)
                 callback(true, {
                     points = totalPoints,
                     packages = packageNames
                 })
                 print(string.format("[TEBEX] Player %s (ID: %s) redeemed transaction %s for %d points",
-                    player.PlayerData.name, player.PlayerData.citizenid, transactionId, totalPoints))
+                    player.PlayerData.name, license2, transactionId, totalPoints))
             else
                 callback(false, locale('errors.add_points_error') .. ": " .. message)
             end

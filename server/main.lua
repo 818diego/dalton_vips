@@ -34,7 +34,7 @@ CreateThread(function()
                 local vipData = Vip.GetPlayerVipData(player)
                 if vipData and vipData.vip_level ~= "Sin VIP" then
                     if Vip.CheckVipExpiration(vipData) then
-                        Vip.RemoveExpiredVip(player.PlayerData.citizenid, vipData.vip_level)
+                        Vip.RemoveExpiredVip(player.PlayerData.license2, vipData.vip_level)
                     end
                 end
             end
@@ -137,9 +137,6 @@ lib.addCommand('addPoints', {
         }
     },
 }, function(source, args, raw)
-    local player = exports.qbx_core:GetPlayer(source)
-    if not player then return end
-
     local targetPlayer = exports.qbx_core:GetPlayer(args.playerId)
     if not targetPlayer then
         TriggerClientEvent('ox_lib:notify', source, {

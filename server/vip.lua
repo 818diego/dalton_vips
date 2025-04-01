@@ -1,18 +1,32 @@
 local vip = {}
 
+function vip.GetLicense2(source)
+    if not source then return nil end
+    local identifiers = GetPlayerIdentifiers(source)
+    if not identifiers then return nil end
+    for _, identifier in pairs(identifiers) do
+        if string.find(identifier, "license2:") then
+            return string.gsub(identifier, "license2:", "")
+        end
+    end
+    return nil
+end
+
 function vip.GetPlayerVipData(player)
-    if not player or not player.PlayerData or not player.PlayerData.citizenid then return nil end
+    if not player or not player.PlayerData then return nil end
     
-    local citizenid = player.PlayerData.citizenid
-    local result = MySQL.query.await('SELECT * FROM dalton_vip WHERE citizenid = ? LIMIT 1', { citizenid })
+    local license2 = vip.GetLicense2(player.PlayerData.source)
+    if not license2 then return nil end
+
+    local result = MySQL.query.await('SELECT * FROM dalton_vip WHERE license2 = ? LIMIT 1', { license2 })
     
     -- Si no hay datos, crear nuevo registro
     if not result or #result == 0 then
-        MySQL.insert.await('INSERT INTO dalton_vip (citizenid, vip_points, vip_level, vip_activated_at, used_referral) VALUES (?, ?, ?, NULL, ?)',
-            { citizenid, 0, "Sin VIP", false })
+        MySQL.insert.await('INSERT INTO dalton_vip (license2, vip_points, vip_level, vip_activated_at, used_referral) VALUES (?, ?, ?, NULL, ?)',
+            { license2, 0, "Sin VIP", false })
         
         return {
-            citizenid = citizenid,
+            license2 = license2,
             vip_points = 0,
             vip_level = "Sin VIP",
             vip_activated_at = nil,
@@ -66,14 +80,14 @@ function vip.CheckVipExpiration(vipData)
     return os.time() - activationTime >= Config.VipDuration / 1000
 end
 
-function vip.RemoveExpiredVip(citizenid, oldVipLevel)
-    MySQL.update('UPDATE dalton_vip SET vip_level = ?, vip_activated_at = NULL WHERE citizenid = ?',
-        { "Sin VIP", citizenid })
+function vip.RemoveExpiredVip(license2, oldVipLevel)
+    MySQL.update('UPDATE dalton_vip SET vip_level = ?, vip_activated_at = NULL WHERE license2 = ?',
+        { "Sin VIP", license2 })
 
-    local player = exports.qbx_core:GetPlayerByCitizenId(citizenid)
+    local player = exports.qbx_core:GetPlayerByIdentifier(license2)
     if player then
         TriggerClientEvent('ox_lib:notify', player.PlayerData.source, {
-            id = 'vip_expired_' .. citizenid,
+            id = 'vip_expired_' .. license2,
             title = locale('notifications.vip_expired'),
             description = locale('notifications.vip_expired_desc', oldVipLevel),
             duration = 10000,
@@ -108,17 +122,17 @@ function vip.BuyVipLevel(player, levelName)
         return false, locale('errors.insufficient_points')
     end
 
-    local citizenid = player.PlayerData.citizenid
+    local license2 = vip.GetLicense2(player.PlayerData.source)
     local newPoints = vipData.vip_points - targetLevel.cost
     local currentTime = os.date('%Y-%m-%d %H:%M:%S')
 
-    MySQL.update('UPDATE dalton_vip SET vip_points = ?, vip_level = ?, vip_activated_at = ? WHERE citizenid = ?',
-        { newPoints, targetLevel.name, currentTime, citizenid })
+    MySQL.update('UPDATE dalton_vip SET vip_points = ?, vip_level = ?, vip_activated_at = ? WHERE license2 = ?',
+        { newPoints, targetLevel.name, currentTime, license2 })
 
     if Config.NotifyPlayer then
         local durationInMinutes = math.floor(Config.VipDuration / (60 * 1000))
         TriggerClientEvent('ox_lib:notify', player.PlayerData.source, {
-            id = 'vip_updated_' .. citizenid,
+            id = 'vip_updated_' .. license2,
             title = locale('notifications.vip_updated'),
             description = locale('notifications.vip_updated_desc', targetLevel.name, durationInMinutes),
             duration = 5000,
