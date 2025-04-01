@@ -55,7 +55,45 @@ function points.UseReferralCode(player, code)
     return false, message
 end
 
+function points.RemoveVipPoints(player, amount)
+    if type(amount) ~= 'number' or amount <= 0 then
+        return false, locale('errors.invalid_amount')
+    end
+
+    local license2 = Vip.GetLicense2(player.PlayerData.source)
+    if not license2 then return false, locale('errors.invalid_data') end
+
+    local data = Vip.GetPlayerVipData(player)
+    if not data then return false, locale('errors.player_not_found') end
+
+    local currentPoints = data.vip_points or 0
+    if currentPoints < amount then
+        return false, locale('errors.insufficient_points')
+    end
+
+    local newPoints = currentPoints - amount
+    local success = MySQL.update.await('UPDATE dalton_vip SET vip_points = ? WHERE license2 = ?', { newPoints, license2 })
+    
+    if not success then 
+        return false, locale('errors.database_error')
+    end
+
+    if Config.NotifyPlayer then
+        TriggerClientEvent('ox_lib:notify', player.PlayerData.source, {
+            id = 'vip_points_removed_' .. license2,
+            title = 'VIP Points',
+            description = locale('notifications.vip_points_removed', amount),
+            duration = 3000,
+            type = 'info',
+            position = 'top'
+        })
+    end
+
+    return true, locale('notifications.success')
+end
+
 exports('AddVipPoints', points.AddVipPoints)
 exports('UseReferralCode', points.UseReferralCode)
+exports('RemoveVipPoints', points.RemoveVipPoints)
 
 return points

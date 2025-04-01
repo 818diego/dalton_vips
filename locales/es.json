@@ -21,6 +21,7 @@
         "success": "Éxito",
         "vip_menu_error": "No se pudo obtener la información VIP",
         "vip_points_added": "Has recibido %d puntos VIP",
+        "vip_points_removed": "Se te han quitado %d puntos VIP",
         "vip_purchase_success": "Compra Exitosa",
         "vip_purchase_error": "Error en la compra",
         "vip_updated": "VIP Actualizado",
